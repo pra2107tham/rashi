@@ -2,9 +2,10 @@
  * Live smoke test for the AI layer: real OpenRouter calls through the exact prompts, schemas and
  * client the deployed functions use. No Firestore, no app, no credentials besides the OpenRouter key.
  *
- *   OPENROUTER_API_KEY=$(firebase functions:secrets:access OPENROUTER_API_KEY) npm run smoke
+ *   OPENROUTER_API_KEY=$(firebase functions:secrets:access OPENROUTER_API_KEY) \
+ *   SARVAM_API_KEY=$(firebase functions:secrets:access SARVAM_API_KEY) npm run smoke
  *
- * Makes 6 low-tier calls (a fraction of a cent in total). Pass --only=reading|match|chat|notification to run one.
+ * Hindi goes to Sarvam, English to OpenRouter. Makes 7 calls (about a rupee in total). Pass --only=reading|match|chat|notification to run one.
  */
 import { ashtakoot, describePlacement, transitMoon } from "../src/astro";
 import { LLM, type FocusArea, type Language, type Period } from "../src/config";
@@ -18,7 +19,8 @@ import { astroContext, chartFor } from "../src/services/profile";
 
 // The functions logger writes structured JSON lines to stdout. Keep the "llm.call" lines (model picked,
 // tokens, cost) for the summary table and hide the rest of the log noise.
-const calls: { label: string; model?: string; costUsd?: number; ms?: number; inputTokens?: number; outputTokens?: number; reasoningTokens?: number }[] = [];
+const calls: { label: string; provider?: string; model?: string; costUsd?: number; ms?: number; inputTokens?: number; outputTokens?: number; reasoningTokens?: number }[] = [];
+const sarvamFallbacks: string[] = [];
 const write = process.stdout.write.bind(process.stdout);
 process.stdout.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
   const text = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString();
@@ -26,6 +28,7 @@ process.stdout.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
     try {
       const entry = JSON.parse(text);
       if (entry.message === "llm.call") calls.push(entry);
+      if (entry.message === "llm.sarvam_fallback") sarvamFallbacks.push(`${entry.label}: ${entry.err}`);
     } catch { /* not a log line */ }
     return true;
   }
@@ -62,6 +65,7 @@ async function reading(language: Language, period: Period = "today") {
   header(`Reading · ${period} · ${language}`);
   const r = await generateJson({
     label: `reading:${period}:${language}`,
+    language,
     system: READING_SYSTEM,
     messages: [{
       role: "user",
@@ -86,6 +90,7 @@ async function match(language: Language) {
   };
   const n = await generateJson({
     label: `match:${language}`,
+    language,
     system: MATCH_SYSTEM,
     messages: [{
       role: "user",
@@ -114,6 +119,7 @@ async function chat(language: Language) {
   const q = language === "hi" ? "क्या इस महीने नौकरी बदलना ठीक रहेगा?" : "Is this a good month to switch jobs?";
   const reply = await generateText({
     label: `chat:${language}`,
+    language,
     system: `${CHAT_SYSTEM}\n\n${buildChatContext(astro, `Moon in ${transit.moonRashi}, nakshatra ${transit.nakshatra}`, language, focus)}`,
     messages: [{ role: "user", content: q }],
     maxTokens: LLM.maxTokens.chat,
@@ -126,6 +132,7 @@ async function notification(r: ReadingContent, language: Language) {
   header(`Push notification · ${language}`);
   const body = await generateText({
     label: `notification:${language}`,
+    language,
     system: NOTIFICATION_SYSTEM,
     messages: [{ role: "user", content: buildNotificationPrompt(r.headline, r.teaser, language) }],
     maxTokens: LLM.maxTokens.notification,
@@ -134,8 +141,12 @@ async function notification(r: ReadingContent, language: Language) {
 }
 
 async function main() {
-  if (!process.env.OPENROUTER_API_KEY) {
-    origLog("Set OPENROUTER_API_KEY, e.g.\n  OPENROUTER_API_KEY=$(firebase functions:secrets:access OPENROUTER_API_KEY) npm run smoke");
+  if (!process.env.OPENROUTER_API_KEY || !process.env.SARVAM_API_KEY) {
+    origLog(
+      "Set OPENROUTER_API_KEY and SARVAM_API_KEY, e.g.\n" +
+      "  OPENROUTER_API_KEY=$(firebase functions:secrets:access OPENROUTER_API_KEY) \\\n" +
+      "  SARVAM_API_KEY=$(firebase functions:secrets:access SARVAM_API_KEY) npm run smoke",
+    );
     process.exit(1);
   }
   const p = describePlacement(myChart.moon);
@@ -159,18 +170,22 @@ async function main() {
     hi = (await step("reading hi", () => reading("hi"))) as ReadingContent | undefined;
   }
   if (want("match")) await step("match hi", () => match("hi"));
-  if (want("chat")) await step("chat en", () => chat("en"));
+  if (want("chat")) {
+    await step("chat en", () => chat("en"));
+    await step("chat hi", () => chat("hi"));
+  }
   if (want("notification")) {
     if (en) await step("notification en", () => notification(en!, "en"));
     if (hi) await step("notification hi", () => notification(hi!, "hi"));
   }
 
-  header("Calls (model picked by the Auto Router)");
+  header("Calls (Hindi → Sarvam, English → OpenRouter Auto Router)");
+  if (sarvamFallbacks.length) origLog(`⚠ Sarvam failed and fell back to OpenRouter:\n  ${sarvamFallbacks.join("\n  ")}\n`);
   let total = 0;
   for (const c of calls) {
     total += c.costUsd ?? 0;
     origLog(
-      `${c.label.padEnd(18)} ${String(c.model ?? "?").padEnd(40)} ${String(c.ms ?? "?").padStart(6)} ms  ` +
+      `${c.label.padEnd(18)} ${String(c.provider ?? "?").padEnd(11)} ${String(c.model ?? "?").padEnd(34)} ${String(c.ms ?? "?").padStart(6)} ms  ` +
       `${c.inputTokens ?? "?"}→${c.outputTokens ?? "?"} tok (${c.reasoningTokens ?? 0} thinking)  $${(c.costUsd ?? 0).toFixed(5)}`,
     );
   }

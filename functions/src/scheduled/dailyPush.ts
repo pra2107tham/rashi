@@ -1,5 +1,5 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { OPENROUTER_API_KEY, PII_ENC_KEY, REGION } from "../config";
+import { OPENROUTER_API_KEY, PII_ENC_KEY, REGION, SARVAM_API_KEY } from "../config";
 import { slotOf } from "../lib/dates";
 import { runDailySlot } from "../services/notifications";
 
@@ -9,7 +9,7 @@ export const dailyPush = onSchedule(
     schedule: "every 15 minutes",
     timeZone: "Etc/UTC",
     region: REGION,
-    secrets: [OPENROUTER_API_KEY, PII_ENC_KEY],
+    secrets: [OPENROUTER_API_KEY, SARVAM_API_KEY, PII_ENC_KEY],
     timeoutSeconds: 540,
     memory: "512MiB",
     retryCount: 0,

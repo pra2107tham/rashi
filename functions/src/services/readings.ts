@@ -51,6 +51,7 @@ async function generate(profile: Profile, period: Period, now: Date): Promise<Re
   const transit = describePlacement(transitMoon(now));
   return generateJson({
     label: `reading:${period}`,
+    language: profile.language,
     system: READING_SYSTEM,
     messages: [{
       role: "user",

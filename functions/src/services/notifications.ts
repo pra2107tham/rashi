@@ -46,6 +46,7 @@ async function notificationBody(headline: string, teaser: string, language: Lang
   try {
     const text = await generateText({
       label: "notification",
+      language,
       system: NOTIFICATION_SYSTEM,
       messages: [{ role: "user", content: buildNotificationPrompt(headline, teaser, language) }],
       maxTokens: LLM.maxTokens.notification,

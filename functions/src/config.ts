@@ -4,6 +4,7 @@ export const REGION = "asia-south1";
 
 // Secrets (Secret Manager). Set with `firebase functions:secrets:set <NAME>`.
 export const OPENROUTER_API_KEY = defineSecret("OPENROUTER_API_KEY");
+export const SARVAM_API_KEY = defineSecret("SARVAM_API_KEY");
 export const PII_ENC_KEY = defineSecret("PII_ENC_KEY"); // base64-encoded 32-byte AES key
 export const PLAY_SERVICE_ACCOUNT = defineSecret("PLAY_SERVICE_ACCOUNT"); // service-account JSON
 
@@ -33,6 +34,24 @@ export const LLM = {
   maxTokens: { reading: 12000, match: 8000, chat: 4000, notification: 2000 },
   appName: "Rashi",
   appUrl: "https://rashi-astro.web.app",
+  /**
+   * Hindi goes to Sarvam's own API (Indic-first models); English stays on the OpenRouter router.
+   * If a Sarvam call fails, the request falls back to OpenRouter so the user still gets content.
+   */
+  sarvam: {
+    languages: ["hi"] as readonly string[],
+    model: "sarvam-105b",
+    chatModel: "sarvam-105b-conversations",
+    /** null switches thinking off: faster and cheaper, and readings don't need it. */
+    reasoningEffort: null as "low" | "high" | "max" | null,
+    /** Sarvam's default is 0.2 with thinking off, which reads flat for horoscope copy. */
+    temperature: 0.7,
+    /** max_tokens ceiling on Sarvam's Starter plan. */
+    maxTokensCap: 4096,
+    /** ₹ per million tokens, for cost logging. */
+    inrPerMillion: { input: 29.28, output: 73.2 },
+    inrPerUsd: 84,
+  },
 } as const;
 
 export const LANGUAGES = ["en", "hi"] as const;

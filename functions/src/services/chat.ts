@@ -55,6 +55,7 @@ export async function sendChatMessage(uid: string, text: string) {
 
     const reply = await generateText({
       label: "chat",
+      language: profile.language,
       system: `${CHAT_SYSTEM}\n\n${context}`,
       messages: toApiMessages(history),
       maxTokens: LLM.maxTokens.chat,

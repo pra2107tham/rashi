@@ -14,6 +14,7 @@ function reply(content: string, status = 200, extra: object = {}) {
 
 beforeEach(() => {
   process.env.OPENROUTER_API_KEY = "sk-or-test";
+  process.env.SARVAM_API_KEY = "sk-sarvam-test";
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset();
 });
@@ -80,5 +81,56 @@ describe("OpenRouter client", () => {
       new Response(JSON.stringify({ choices: [{ message: { content: "partial" }, finish_reason: "length" }] })),
     );
     await expect(generateText(base)).rejects.toMatchObject({ reason: "max_tokens" });
+  });
+
+  describe("Sarvam for Hindi", () => {
+    it("sends Hindi to Sarvam with thinking off, a warmer temperature and a capped budget", async () => {
+      fetchMock.mockResolvedValue(reply("नमस्ते"));
+      expect(await generateText({ ...base, language: "hi", maxTokens: 12000 })).toBe("नमस्ते");
+
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe("https://api.sarvam.ai/v1/chat/completions");
+      expect(init.headers["api-subscription-key"]).toBe("sk-sarvam-test");
+      const body = JSON.parse(init.body);
+      expect(body).toMatchObject({ model: "sarvam-105b", max_tokens: 4096, reasoning_effort: null, temperature: 0.7 });
+      expect(body.plugins).toBeUndefined();
+    });
+
+    it("uses the conversational model for chat sessions", async () => {
+      fetchMock.mockResolvedValue(reply("ठीक है"));
+      await generateText({ ...base, language: "hi", sessionId: "chat-u1" });
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe("sarvam-105b-conversations");
+    });
+
+    it("passes the JSON schema to Sarvam too", async () => {
+      fetchMock.mockResolvedValue(reply('{"answer": 7}'));
+      expect(await generateJson({ ...base, language: "hi", schema: z.object({ answer: z.number() }), schemaName: "a" }))
+        .toEqual({ answer: 7 });
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).response_format.json_schema.name).toBe("a");
+    });
+
+    it("falls back to OpenRouter when Sarvam errors or returns bad JSON", async () => {
+      fetchMock
+        .mockResolvedValueOnce(new Response(JSON.stringify({ error: { message: "quota" } }), { status: 402 }))
+        .mockResolvedValueOnce(reply("fallback"));
+      expect(await generateText({ ...base, language: "hi" })).toBe("fallback");
+      expect(fetchMock.mock.calls[1][0]).toBe("https://openrouter.ai/api/v1/chat/completions");
+
+      fetchMock.mockReset()
+        .mockResolvedValueOnce(reply("यह JSON नहीं है"))
+        .mockResolvedValueOnce(reply('{"answer": 1}'));
+      expect(await generateJson({ ...base, language: "hi", schema: z.object({ answer: z.number() }), schemaName: "a" }))
+        .toEqual({ answer: 1 });
+      expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+        "https://api.sarvam.ai/v1/chat/completions",
+        "https://openrouter.ai/api/v1/chat/completions",
+      ]);
+    });
+
+    it("keeps English on OpenRouter", async () => {
+      fetchMock.mockResolvedValue(reply("hi"));
+      await generateText({ ...base, language: "en" });
+      expect(fetchMock.mock.calls[0][0]).toBe("https://openrouter.ai/api/v1/chat/completions");
+    });
   });
 });

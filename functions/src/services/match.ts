@@ -51,6 +51,7 @@ export async function createMatch(uid: string, input: CreateMatchInput) {
   try {
     narrative = await generateJson({
       label: "match",
+      language: profile.language,
       system: MATCH_SYSTEM,
       messages: [{
         role: "user",

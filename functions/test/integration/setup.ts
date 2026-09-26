@@ -5,6 +5,7 @@ process.env.GCLOUD_PROJECT ??= "demo-rashi";
 process.env.FIRESTORE_EMULATOR_HOST ??= "127.0.0.1:8080";
 process.env.PII_ENC_KEY = randomBytes(32).toString("base64");
 process.env.OPENROUTER_API_KEY = "test";
+process.env.SARVAM_API_KEY = "test";
 process.env.PLAY_PACKAGE_NAME = "com.rashi.app";
 
 export async function clearFirestore(): Promise<void> {
