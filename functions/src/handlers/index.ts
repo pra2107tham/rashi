@@ -35,7 +35,7 @@ export const getReading = callable(
   (uid, data) => reading(uid, data.period),
   {
     secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
-    timeoutSeconds: 60,
+    timeoutSeconds: 180,
     memory: "512MiB",
     rateLimit: { bucket: "reading", perMinute: RATE_LIMITS.reading },
   },
@@ -83,6 +83,7 @@ export const createMatch = callable(
   (uid, data) => match(uid, data),
   {
     secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
+    timeoutSeconds: 180,
     memory: "512MiB",
     rateLimit: { bucket: "match", perMinute: RATE_LIMITS.match },
   },
@@ -95,6 +96,7 @@ export const sendChatMessage = callable(
   (uid, data) => chat(uid, data.text),
   {
     secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
+    timeoutSeconds: 120,
     rateLimit: { bucket: "chat", perMinute: RATE_LIMITS.chat },
   },
 );

@@ -21,6 +21,16 @@ export const LLM = {
   model: "openrouter/auto",
   costTier: "low" as "low" | "medium" | "high" | "xhigh" | "max",
   maxPricePerMillion: { prompt: 1, completion: 4 },
+  /**
+   * Cheap routed models often "think" before answering, and those hidden tokens count against
+   * max_tokens and add latency. Keep thinking short and don't send it back to us.
+   */
+  reasoning: { effort: "low", exclude: true },
+  /**
+   * Output budgets (thinking + visible text). Generous on purpose: Devanagari text uses 2–3× the
+   * tokens of English, and you only pay for what's actually generated.
+   */
+  maxTokens: { reading: 12000, match: 8000, chat: 4000, notification: 2000 },
   appName: "Rashi",
   appUrl: "https://rashi-astro.web.app",
 } as const;

@@ -1,6 +1,6 @@
 import { getMessaging } from "firebase-admin/messaging";
 import * as logger from "firebase-functions/logger";
-import { MAX_FCM_TOKENS, type Language } from "../config";
+import { LLM, MAX_FCM_TOKENS, type Language } from "../config";
 import { generateText } from "../lib/llm";
 import { isValidZone, utcSlotFor } from "../lib/dates";
 import { invalid } from "../lib/errors";
@@ -48,7 +48,7 @@ async function notificationBody(headline: string, teaser: string, language: Lang
       label: "notification",
       system: NOTIFICATION_SYSTEM,
       messages: [{ role: "user", content: buildNotificationPrompt(headline, teaser, language) }],
-      maxTokens: 200,
+      maxTokens: LLM.maxTokens.notification,
     });
     return text.length > 140 ? `${text.slice(0, 137)}…` : text;
   } catch (err) {

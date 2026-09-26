@@ -35,6 +35,7 @@ describe("OpenRouter client", () => {
     expect(body.provider).toEqual({ require_parameters: true, max_price: { prompt: 1, completion: 4 } });
     expect(body.messages[0]).toEqual({ role: "system", content: "sys" });
     expect(body.session_id).toBe("chat-u1");
+    expect(body.reasoning).toEqual({ effort: "low", exclude: true });
   });
 
   it("requests strict JSON schema output and validates the result", async () => {
@@ -65,6 +66,12 @@ describe("OpenRouter client", () => {
 
     fetchMock.mockReset().mockResolvedValue(new Response(JSON.stringify({ error: { message: "bad" } }), { status: 400 }));
     await expect(generateText(base)).rejects.toMatchObject({ reason: "http" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't retry a call that timed out", async () => {
+    fetchMock.mockRejectedValue(Object.assign(new Error("timed out"), { name: "TimeoutError" }));
+    await expect(generateText(base)).rejects.toThrow("timed out");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

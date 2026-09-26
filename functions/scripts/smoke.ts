@@ -7,7 +7,7 @@
  * Makes 6 low-tier calls (a fraction of a cent in total). Pass --only=reading|match|chat|notification to run one.
  */
 import { ashtakoot, describePlacement, transitMoon } from "../src/astro";
-import type { FocusArea, Language, Period } from "../src/config";
+import { LLM, type FocusArea, type Language, type Period } from "../src/config";
 import { describePeriod } from "../src/lib/dates";
 import { generateJson, generateText } from "../src/lib/llm";
 import { CHAT_SYSTEM, buildChatContext } from "../src/prompts/chat";
@@ -18,7 +18,7 @@ import { astroContext, chartFor } from "../src/services/profile";
 
 // The functions logger writes structured JSON lines to stdout. Keep the "llm.call" lines (model picked,
 // tokens, cost) for the summary table and hide the rest of the log noise.
-const calls: { label: string; model?: string; costUsd?: number; ms?: number; inputTokens?: number; outputTokens?: number }[] = [];
+const calls: { label: string; model?: string; costUsd?: number; ms?: number; inputTokens?: number; outputTokens?: number; reasoningTokens?: number }[] = [];
 const write = process.stdout.write.bind(process.stdout);
 process.stdout.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
   const text = typeof chunk === "string" ? chunk : Buffer.from(chunk).toString();
@@ -71,7 +71,7 @@ async function reading(language: Language, period: Period = "today") {
     }],
     schema: readingSchema,
     schemaName: "horoscope_reading",
-    maxTokens: 4000,
+    maxTokens: LLM.maxTokens.reading,
   });
   printReading(r);
   return r;
@@ -102,7 +102,7 @@ async function match(language: Language) {
     }],
     schema: matchNarrativeSchema,
     schemaName: "kundli_match",
-    maxTokens: 3000,
+    maxTokens: LLM.maxTokens.match,
   });
   origLog(`Score: ${result.scores.total}/36  ${JSON.stringify(result.scores)}`);
   origLog(`\n★ ${n.headline}\n  ${n.summary}\n  + ${n.strengths.join("\n  + ")}\n  − ${n.cautions.join("\n  − ")}`);
@@ -116,7 +116,7 @@ async function chat(language: Language) {
     label: `chat:${language}`,
     system: `${CHAT_SYSTEM}\n\n${buildChatContext(astro, `Moon in ${transit.moonRashi}, nakshatra ${transit.nakshatra}`, language, focus)}`,
     messages: [{ role: "user", content: q }],
-    maxTokens: 1500,
+    maxTokens: LLM.maxTokens.chat,
     sessionId: "smoke-test",
   });
   origLog(`Q: ${q}\nA: ${reply}`);
@@ -128,7 +128,7 @@ async function notification(r: ReadingContent, language: Language) {
     label: `notification:${language}`,
     system: NOTIFICATION_SYSTEM,
     messages: [{ role: "user", content: buildNotificationPrompt(r.headline, r.teaser, language) }],
-    maxTokens: 200,
+    maxTokens: LLM.maxTokens.notification,
   });
   origLog(`${body}   (${body.length} chars)`);
 }
@@ -171,7 +171,7 @@ async function main() {
     total += c.costUsd ?? 0;
     origLog(
       `${c.label.padEnd(18)} ${String(c.model ?? "?").padEnd(40)} ${String(c.ms ?? "?").padStart(6)} ms  ` +
-      `${c.inputTokens ?? "?"}→${c.outputTokens ?? "?"} tok  $${(c.costUsd ?? 0).toFixed(5)}`,
+      `${c.inputTokens ?? "?"}→${c.outputTokens ?? "?"} tok (${c.reasoningTokens ?? 0} thinking)  $${(c.costUsd ?? 0).toFixed(5)}`,
     );
   }
   origLog(`Total: $${total.toFixed(5)}  (~₹${(total * 84).toFixed(3)})`);

@@ -1,6 +1,6 @@
 import * as logger from "firebase-functions/logger";
 import { describePlacement, transitMoon } from "../astro";
-import { type Period } from "../config";
+import { LLM, type Period } from "../config";
 import { generateJson } from "../lib/llm";
 import { describePeriod, periodKey } from "../lib/dates";
 import { unavailable } from "../lib/errors";
@@ -11,9 +11,9 @@ import {
 import { canReadFull, loadEntitlements } from "./entitlements";
 import { astroContext, loadProfile, type Profile } from "./profile";
 
-const LOCK_TTL_MS = 60_000;
+const LOCK_TTL_MS = 150_000;
 const WAIT_POLL_MS = 500;
-const WAIT_MAX_MS = 25_000;
+const WAIT_MAX_MS = 100_000;
 
 export interface ReadingDoc {
   uid: string;
@@ -68,7 +68,7 @@ async function generate(profile: Profile, period: Period, now: Date): Promise<Re
     }],
     schema: readingSchema,
     schemaName: "horoscope_reading",
-    maxTokens: 4000,
+    maxTokens: LLM.maxTokens.reading,
   });
 }
 

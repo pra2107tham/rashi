@@ -1,5 +1,5 @@
 import { ashtakoot, describePlacement, type BirthChart } from "../astro";
-import { PII_ENC_KEY } from "../config";
+import { LLM, PII_ENC_KEY } from "../config";
 import { generateJson } from "../lib/llm";
 import { encryptJson, sha256 } from "../lib/crypto";
 import { unavailable } from "../lib/errors";
@@ -64,7 +64,7 @@ export async function createMatch(uid: string, input: CreateMatchInput) {
       }],
       schema: matchNarrativeSchema,
       schemaName: "kundli_match",
-      maxTokens: 3000,
+      maxTokens: LLM.maxTokens.match,
     });
   } catch (err) {
     logger.error("match.generate_failed", { uid, err: String(err) });

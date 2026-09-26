@@ -1,6 +1,6 @@
 import * as logger from "firebase-functions/logger";
 import { describePlacement, transitMoon } from "../astro";
-import { CHAT_HISTORY_LIMIT } from "../config";
+import { CHAT_HISTORY_LIMIT, LLM } from "../config";
 import { generateText, type ChatMessage } from "../lib/llm";
 import { exhausted, unavailable } from "../lib/errors";
 import { FieldValue, firestore, paths } from "../lib/firestore";
@@ -57,7 +57,7 @@ export async function sendChatMessage(uid: string, text: string) {
       label: "chat",
       system: `${CHAT_SYSTEM}\n\n${context}`,
       messages: toApiMessages(history),
-      maxTokens: 1500,
+      maxTokens: LLM.maxTokens.chat,
       sessionId: `chat-${uid}`,
     });
 

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { LLM, OPENROUTER_API_KEY } from "../config";
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
-const TIMEOUT_MS = 25_000;
+const TIMEOUT_MS = 90_000;
 const RETRIES = 2;
 
 export class GenerationError extends Error {
@@ -30,7 +30,12 @@ interface BaseRequest {
 interface OpenRouterResponse {
   model?: string;
   choices?: { message?: { content?: string | null; refusal?: string | null }; finish_reason?: string | null }[];
-  usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number };
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    cost?: number;
+    completion_tokens_details?: { reasoning_tokens?: number };
+  };
   error?: { message?: string; code?: number };
 }
 
@@ -56,7 +61,9 @@ async function post(body: Record<string, unknown>, label: string): Promise<OpenR
       // Retry only rate limits and server-side failures.
       if (res.status !== 429 && res.status < 500) break;
     } catch (err) {
-      lastErr = err; // network error or timeout
+      lastErr = err;
+      // A timed-out call already used the time budget; retrying would outlast the function timeout.
+      if (err instanceof Error && err.name === "TimeoutError") break;
     }
   }
   throw lastErr;
@@ -73,6 +80,7 @@ async function complete(req: BaseRequest, extra: Record<string, unknown> = {}): 
       model: LLM.model,
       messages: [{ role: "system", content: req.system }, ...req.messages],
       max_tokens: req.maxTokens,
+      reasoning: LLM.reasoning,
       plugins: [{ id: "auto-router", cost_tier: LLM.costTier }, ...((extra.plugins as unknown[]) ?? [])],
       provider: { require_parameters: true, max_price: LLM.maxPricePerMillion },
       ...(req.sessionId ? { session_id: req.sessionId } : {}),
@@ -88,6 +96,7 @@ async function complete(req: BaseRequest, extra: Record<string, unknown> = {}): 
     finish: choice?.finish_reason,
     inputTokens: data.usage?.prompt_tokens,
     outputTokens: data.usage?.completion_tokens,
+    reasoningTokens: data.usage?.completion_tokens_details?.reasoning_tokens,
     costUsd: data.usage?.cost,
     ms: Date.now() - started,
   });
