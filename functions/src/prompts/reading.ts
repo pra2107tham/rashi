@@ -4,7 +4,7 @@ import type { FocusArea, Language, Period } from "../config";
 import type { TransitFacts } from "../astro";
 import { SAFETY_RULES, describeAstro, describeTransitFacts, languageInstruction, type AstroContext } from "./common";
 
-export const READING_PROMPT_VERSION = "reading-v2";
+export const READING_PROMPT_VERSION = "reading-v3";
 
 const AREAS = ["love", "career", "money", "health", "overall"] as const;
 const AREA_ALIASES: Record<string, (typeof AREAS)[number]> = {
@@ -29,7 +29,7 @@ export const readingSchema = z.object({
     }),
     2,
     4,
-  ).describe("Exactly 3 or 4 sections; the user's focus area first"),
+  ).describe("Exactly 3 or 4 sections, each about a DIFFERENT area: the user's focus area first, then others. Never repeat an area."),
   lucky: z.object({
     color: z.string(),
     number: looseInt(1, 99).describe("A whole number from 1 to 99, written with Western digits"),
@@ -68,7 +68,7 @@ ${describeAstro(input.astro)}
 
 ${describeTransitFacts(input.facts)}
 
-The reader's main focus: ${focus}.
+The reader's main focus: ${focus}. Put it first, then cover ${input.focusArea === "curious" ? "three different areas" : "two or three other areas"} from love, career, money and health. Each section covers a different area, so never write two sections about the same one.
 
 ${languageInstruction(input.language)}`;
 }

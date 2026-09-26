@@ -42,10 +42,10 @@ describe("prompts", () => {
       doshas: { nadi: false, bhakoot: true, manglikA: false, manglikB: true },
     });
     expect(p).toContain("Total: 24.5 out of 36");
-    expect(p).toContain("- Vashya: 2/2 (full)");
-    expect(p).toContain("- Bhakoot: 0/7 (zero)");
-    expect(p).toContain("- Tara: 1.5/3 (strong)");
-    expect(p).toContain("Bhakoot dosha: yes");
+    expect(p).toContain("- Vashya (वश्य): 2/2 (full)");
+    expect(p).toContain("- Bhakoot (भकूट): 0/7 (zero)");
+    expect(p).toContain("- Tara (तारा): 1.5/3 (strong)");
+    expect(p).toContain("Bhakoot dosha (भकूट दोष): yes");
   });
 
   it("labels koota strength", () => {
