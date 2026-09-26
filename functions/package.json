@@ -12,7 +12,8 @@
     "test": "vitest run --project unit",
     "test:integration": "firebase emulators:exec --only firestore --project demo-rashi \"vitest run --project integration\"",
     "serve": "npm run build && firebase emulators:start --only functions,firestore",
-    "deploy": "firebase deploy --only functions,firestore"
+    "deploy": "firebase deploy --only functions,firestore",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "@googleapis/androidpublisher": "^42.1.0",
@@ -31,6 +32,7 @@
     "eslint": "^10.11.0",
     "firebase": "^12.19.0",
     "firebase-tools": "^15.31.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1",
     "vitest": "^5.0.2"

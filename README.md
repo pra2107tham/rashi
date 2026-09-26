@@ -73,6 +73,16 @@ npm run test:integration    # Firestore emulator (needs Java); OpenRouter, Play 
 npm run serve               # local emulators (put OPENROUTER_API_KEY in functions/.secret.local for real calls)
 ```
 
+## Live smoke test (real AI calls)
+
+`functions/scripts/smoke.ts` sends 6 real OpenRouter requests through the same prompts, schemas and client the deployed functions use. It generates today's reading in English and Hindi, a kundli match in Hindi, a chat reply, and two push notifications. At the end it prints each output and a table showing which model the Auto Router picked, its latency, tokens and cost. It doesn't touch Firestore and needs no credentials other than the OpenRouter key.
+
+```sh
+cd functions
+OPENROUTER_API_KEY=$(firebase functions:secrets:access OPENROUTER_API_KEY) npm run smoke
+npm run smoke -- --only=match     # or reading | chat | notification
+```
+
 ## Notes
 
 - **Models and cost:** every call uses `openrouter/auto` with `cost_tier: "low"`, restricted to endpoints that support the parameters we send (JSON schema output). A hard price ceiling of $1 input / $4 output per million tokens is also set. Change these in `LLM` (`functions/src/config.ts`), or in your OpenRouter workspace's Routing settings. Each call logs the model picked and its cost (`llm.call`). Chat passes a `session_id` so a conversation stays on one model.
