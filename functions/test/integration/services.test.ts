@@ -18,7 +18,7 @@ import { getReading, readingId } from "../../src/services/readings";
 
 const READING = {
   headline: "A quiet win at work", teaser: "Something you said last week lands today.", mood: "steady",
-  sections: [{ area: "career", title: "Work", body: "..." }],
+  sections: [1, 2, 3].map(() => ({ area: "career", title: "Work", body: "..." })),
   lucky: { color: "Green", number: 7, time: "10–11 am" }, remedy: "Walk at sunrise",
 };
 const NARRATIVE = {

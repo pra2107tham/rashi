@@ -1,5 +1,5 @@
 import * as logger from "firebase-functions/logger";
-import { describePlacement, transitMoon } from "../astro";
+import { transitFacts, transitMoon } from "../astro";
 import { LLM, type Period } from "../config";
 import { generateJson } from "../lib/llm";
 import { describePeriod, periodKey } from "../lib/dates";
@@ -48,7 +48,6 @@ function isFresh(doc: ReadingDoc | undefined, profile: Profile): doc is ReadingD
 }
 
 async function generate(profile: Profile, period: Period, now: Date): Promise<ReadingContent> {
-  const transit = describePlacement(transitMoon(now));
   return generateJson({
     label: `reading:${period}`,
     language: profile.language,
@@ -61,10 +60,7 @@ async function generate(profile: Profile, period: Period, now: Date): Promise<Re
         focusArea: profile.focusArea,
         language: profile.language,
         astro: astroContext(profile.chart),
-        transit: {
-          moonRashi: `${transit.rashi.name} (${transit.rashi.english})`,
-          nakshatra: transit.nakshatra.name,
-        },
+        facts: transitFacts(profile.chart.moon, transitMoon(now)),
       }),
     }],
     schema: readingSchema,

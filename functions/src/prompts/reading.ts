@@ -1,8 +1,9 @@
 import { z } from "zod";
 import type { FocusArea, Language, Period } from "../config";
-import { SAFETY_RULES, describeAstro, languageInstruction, type AstroContext } from "./common";
+import type { TransitFacts } from "../astro";
+import { SAFETY_RULES, describeAstro, describeTransitFacts, languageInstruction, type AstroContext } from "./common";
 
-export const READING_PROMPT_VERSION = "reading-v1";
+export const READING_PROMPT_VERSION = "reading-v2";
 
 export const readingSchema = z.object({
   headline: z.string().describe("A 4–8 word hook for the card title"),
@@ -12,11 +13,12 @@ export const readingSchema = z.object({
     .array(
       z.object({
         area: z.enum(["love", "career", "money", "health", "overall"]),
-        title: z.string(),
-        body: z.string().describe("60–110 words, specific and actionable"),
+        title: z.string().describe("Short section title in the reading's language"),
+        body: z.string().describe("60–110 words of plain prose, specific and actionable"),
       }),
     )
-    .describe("3–4 sections; the user's focus area first"),
+    .describe("Exactly 3 or 4 sections; the user's focus area first")
+    .refine((s) => s.length >= 3 && s.length <= 4, "3 or 4 sections required"),
   lucky: z.object({ color: z.string(), number: z.number().int().min(1).max(99), time: z.string() }),
   remedy: z.string().describe("One simple, free, positive practice for the period"),
 });
@@ -24,7 +26,7 @@ export type ReadingContent = z.infer<typeof readingSchema>;
 
 export const READING_SYSTEM = `You are Rashi, a thoughtful Vedic astrologer writing personalised horoscope readings for an Indian mobile app.
 
-Readings are based on the person's sidereal (Lahiri) Moon sign and nakshatra, and on where the Moon is transiting during the period. Use the relationship between the transiting Moon and the natal Moon (for example the house it transits counted from the natal rashi, and the tara from the birth nakshatra) to give the reading a real astrological basis. Mention that basis briefly and in plain words, then focus on practical, relatable guidance.
+Readings are based on the person's sidereal (Lahiri) Moon sign and nakshatra, and on where the Moon is transiting during the period. You are given the transit house (counted from the natal Moon sign) and the tara as pre-calculated facts. Use them as the astrological basis, mention them briefly in plain words, and never recalculate them. Then focus on practical, relatable guidance.
 
 Style:
 - Specific and personal, never generic sun-sign filler. Speak to "you".
@@ -39,7 +41,7 @@ export interface ReadingPromptInput {
   focusArea: FocusArea;
   language: Language;
   astro: AstroContext;
-  transit: { moonRashi: string; nakshatra: string };
+  facts: TransitFacts;
 }
 
 export function buildReadingPrompt(input: ReadingPromptInput): string {
@@ -49,7 +51,7 @@ export function buildReadingPrompt(input: ReadingPromptInput): string {
 Natal chart:
 ${describeAstro(input.astro)}
 
-Transit at the start of the period: Moon in ${input.transit.moonRashi}, nakshatra ${input.transit.nakshatra}.
+${describeTransitFacts(input.facts)}
 
 The reader's main focus: ${focus}.
 

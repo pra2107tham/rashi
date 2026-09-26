@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ashtakoot, computeChart, houseFrom, manglikStatus, placeMoon, type BirthChart,
+  ashtakoot, computeChart, houseFrom, manglikStatus, placeMoon, transitFacts, type BirthChart,
 } from "../../src/astro";
 import { YONI_MATRIX } from "../../src/astro/tables";
 import { siderealAscendant } from "../../src/astro/ephemeris";
@@ -93,5 +93,23 @@ describe("ashtakoot", () => {
         expect(total).toBeLessThanOrEqual(36);
       }
     }
+  });
+});
+
+describe("transit facts", () => {
+  it("counts the house from the natal Moon and the tara from the birth nakshatra", () => {
+    // Natal: Makara, Shravana (282°). Transit: Meena, Uttara Bhadrapada (340°).
+    const f = transitFacts(placeMoon(282), placeMoon(340));
+    expect(f.natal.rashi.name).toBe("Makara");
+    expect(f.transit.rashi.name).toBe("Meena");
+    expect(f.house).toBe(3);
+    expect(f.tara).toMatchObject({ number: 5, name: "Pratyari", tone: "challenging" });
+  });
+
+  it("wraps around the zodiac and the nakshatra cycle", () => {
+    const f = transitFacts(placeMoon(350), placeMoon(5)); // Meena/Revati → Mesha/Ashwini
+    expect(f.house).toBe(2);
+    expect(f.tara).toMatchObject({ number: 2, name: "Sampat" });
+    expect(transitFacts(placeMoon(100), placeMoon(100)).tara.name).toBe("Janma");
   });
 });

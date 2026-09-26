@@ -1,5 +1,5 @@
 import * as logger from "firebase-functions/logger";
-import { describePlacement, transitMoon } from "../astro";
+import { transitFacts, transitMoon } from "../astro";
 import { CHAT_HISTORY_LIMIT, LLM } from "../config";
 import { generateText, type ChatMessage } from "../lib/llm";
 import { exhausted, unavailable } from "../lib/errors";
@@ -45,10 +45,9 @@ export async function sendChatMessage(uid: string, text: string) {
   try {
     const recent = await chatCol.orderBy("createdAt", "desc").limit(CHAT_HISTORY_LIMIT).get();
     const history = recent.docs.reverse().map((d) => d.data() as ChatMessageDoc);
-    const transit = describePlacement(transitMoon());
     const context = buildChatContext(
       astroContext(profile.chart),
-      `Moon in ${transit.rashi.name} (${transit.rashi.english}), nakshatra ${transit.nakshatra.name}`,
+      transitFacts(profile.chart.moon, transitMoon()),
       profile.language,
       profile.focusArea,
     );

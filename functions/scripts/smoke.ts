@@ -7,7 +7,7 @@
  *
  * Hindi goes to Sarvam, English to OpenRouter. Makes 7 calls (about a rupee in total). Pass --only=reading|match|chat|notification to run one.
  */
-import { ashtakoot, describePlacement, transitMoon } from "../src/astro";
+import { ashtakoot, describePlacement, transitFacts, transitMoon } from "../src/astro";
 import { LLM, type FocusArea, type Language, type Period } from "../src/config";
 import { describePeriod } from "../src/lib/dates";
 import { generateJson, generateText } from "../src/lib/llm";
@@ -45,8 +45,7 @@ const myChart = chartFor(me, TZ);
 const partnerChart = chartFor(partner, TZ);
 const astro = astroContext(myChart);
 const now = new Date();
-const t = describePlacement(transitMoon(now));
-const transit = { moonRashi: `${t.rashi.name} (${t.rashi.english})`, nakshatra: t.nakshatra.name };
+const facts = transitFacts(myChart.moon, transitMoon(now));
 
 const only = process.argv.find((a) => a.startsWith("--only="))?.split("=")[1];
 const want = (name: string) => !only || only === name;
@@ -70,7 +69,7 @@ async function reading(language: Language, period: Period = "today") {
     messages: [{
       role: "user",
       content: buildReadingPrompt({
-        period, periodDescription: describePeriod(period, TZ, now), focusArea: focus, language, astro, transit,
+        period, periodDescription: describePeriod(period, TZ, now), focusArea: focus, language, astro, facts,
       }),
     }],
     schema: readingSchema,
@@ -120,7 +119,7 @@ async function chat(language: Language) {
   const reply = await generateText({
     label: `chat:${language}`,
     language,
-    system: `${CHAT_SYSTEM}\n\n${buildChatContext(astro, `Moon in ${transit.moonRashi}, nakshatra ${transit.nakshatra}`, language, focus)}`,
+    system: `${CHAT_SYSTEM}\n\n${buildChatContext(astro, facts, language, focus)}`,
     messages: [{ role: "user", content: q }],
     maxTokens: LLM.maxTokens.chat,
     sessionId: "smoke-test",
@@ -150,7 +149,7 @@ async function main() {
     process.exit(1);
   }
   const p = describePlacement(myChart.moon);
-  origLog(`Test chart: Moon in ${p.rashi.name}, ${p.nakshatra.name} pada ${p.nakshatra.pada}; transit Moon in ${transit.moonRashi}`);
+  origLog(`Test chart: Moon in ${p.rashi.name}, ${p.nakshatra.name} pada ${p.nakshatra.pada}; transit Moon in ${facts.transit.rashi.name} → house ${facts.house}, tara ${facts.tara.name}`);
 
   const failures: string[] = [];
   const step = async (name: string, fn: () => Promise<unknown>) => {
