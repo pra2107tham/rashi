@@ -8,7 +8,7 @@ export const MATCH_PROMPT_VERSION = "match-v3";
 export const matchNarrativeSchema = z.object({
   headline: z.string().describe("Short, shareable verdict, e.g. 'A steady, heart-first match'"),
   summary: z.string().describe("80–120 words explaining what the score means for this couple"),
-  strengths: boundedArray(z.string(), 1, 4).describe("2–4 short points, only about kootas marked strong or full"),
+  strengths: boundedArray(z.string(), 0, 4).describe("2–4 short points, only about kootas marked strong or full"),
   cautions: boundedArray(z.string(), 0, 3).describe("1–3 short, gentle points, only about kootas marked weak or zero"),
   doshaNote: z.string().describe("Your own plain-language note on any dosha, or reassurance if none; never alarming"),
   shareLine: clippedString(120).describe(
