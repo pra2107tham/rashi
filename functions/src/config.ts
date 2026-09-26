@@ -3,7 +3,7 @@ import { defineSecret, defineString } from "firebase-functions/params";
 export const REGION = "asia-south1";
 
 // Secrets (Secret Manager). Set with `firebase functions:secrets:set <NAME>`.
-export const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
+export const OPENROUTER_API_KEY = defineSecret("OPENROUTER_API_KEY");
 export const PII_ENC_KEY = defineSecret("PII_ENC_KEY"); // base64-encoded 32-byte AES key
 export const PLAY_SERVICE_ACCOUNT = defineSecret("PLAY_SERVICE_ACCOUNT"); // service-account JSON
 
@@ -12,11 +12,17 @@ export const PLAY_PACKAGE_NAME = defineString("PLAY_PACKAGE_NAME", { default: "c
 
 export const IS_EMULATOR = process.env.FUNCTIONS_EMULATOR === "true";
 
-export const MODELS = {
-  reading: "claude-sonnet-5",
-  match: "claude-sonnet-5",
-  chat: "claude-sonnet-5",
-  notification: "claude-haiku-4-5",
+/**
+ * All generation goes through OpenRouter's Auto Router, which picks a model per request.
+ * `costTier: "low"` keeps it in the cheapest capable band; `maxPricePerMillion` is a hard
+ * ceiling (USD per million tokens) so a routing change can never pick an expensive model.
+ */
+export const LLM = {
+  model: "openrouter/auto",
+  costTier: "low" as "low" | "medium" | "high" | "xhigh" | "max",
+  maxPricePerMillion: { prompt: 1, completion: 4 },
+  appName: "Rashi",
+  appUrl: "https://rashi-astro.web.app",
 } as const;
 
 export const LANGUAGES = ["en", "hi"] as const;
@@ -54,7 +60,7 @@ export const PRODUCTS: Record<string, Product> = {
   rashi_plus_yearly: { type: "subscription" },
 };
 
-/** Per-user, per-minute call limits for callables that hit Claude. */
+/** Per-user, per-minute call limits for callables that call the LLM. */
 export const RATE_LIMITS = {
   reading: 20,
   match: 5,

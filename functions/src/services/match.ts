@@ -1,6 +1,6 @@
 import { ashtakoot, describePlacement, type BirthChart } from "../astro";
-import { MODELS, PII_ENC_KEY } from "../config";
-import { generateJson } from "../lib/claude";
+import { PII_ENC_KEY } from "../config";
+import { generateJson } from "../lib/llm";
 import { encryptJson, sha256 } from "../lib/crypto";
 import { unavailable } from "../lib/errors";
 import { FieldValue, firestore, paths } from "../lib/firestore";
@@ -51,7 +51,6 @@ export async function createMatch(uid: string, input: CreateMatchInput) {
   try {
     narrative = await generateJson({
       label: "match",
-      model: MODELS.match,
       system: MATCH_SYSTEM,
       messages: [{
         role: "user",
@@ -64,8 +63,8 @@ export async function createMatch(uid: string, input: CreateMatchInput) {
         }),
       }],
       schema: matchNarrativeSchema,
+      schemaName: "kundli_match",
       maxTokens: 3000,
-      effort: "low",
     });
   } catch (err) {
     logger.error("match.generate_failed", { uid, err: String(err) });

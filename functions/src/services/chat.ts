@@ -1,8 +1,7 @@
-import type Anthropic from "@anthropic-ai/sdk";
 import * as logger from "firebase-functions/logger";
 import { describePlacement, transitMoon } from "../astro";
-import { CHAT_HISTORY_LIMIT, MODELS } from "../config";
-import { generateText } from "../lib/claude";
+import { CHAT_HISTORY_LIMIT } from "../config";
+import { generateText, type ChatMessage } from "../lib/llm";
 import { exhausted, unavailable } from "../lib/errors";
 import { FieldValue, firestore, paths } from "../lib/firestore";
 import { CHAT_SYSTEM, buildChatContext } from "../prompts/chat";
@@ -14,19 +13,19 @@ interface ChatMessageDoc {
   failed?: boolean;
 }
 
-/** Anthropic needs alternating turns starting with the user; merge runs and drop a leading reply. */
-export function toApiMessages(history: ChatMessageDoc[]): Anthropic.MessageParam[] {
-  const out: Anthropic.MessageParam[] = [];
+/** Many models need alternating turns starting with the user; merge runs and drop a leading reply. */
+export function toApiMessages(history: ChatMessageDoc[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
   for (const m of history) {
     if (m.failed) continue;
     const last = out[out.length - 1];
-    if (last && last.role === m.role) last.content = `${last.content as string}\n\n${m.content}`;
+    if (last && last.role === m.role) last.content = `${last.content}\n\n${m.content}`;
     else if (out.length > 0 || m.role === "user") out.push({ role: m.role, content: m.content });
   }
   return out;
 }
 
-/** Spends one credit, asks Claude, stores both turns. Refunds the credit if generation fails. */
+/** Spends one credit, asks the model, stores both turns. Refunds the credit if generation fails. */
 export async function sendChatMessage(uid: string, text: string) {
   const db = firestore();
   const profile = await loadProfile(uid);
@@ -56,11 +55,10 @@ export async function sendChatMessage(uid: string, text: string) {
 
     const reply = await generateText({
       label: "chat",
-      model: MODELS.chat,
       system: `${CHAT_SYSTEM}\n\n${context}`,
       messages: toApiMessages(history),
       maxTokens: 1500,
-      effort: "low",
+      sessionId: `chat-${uid}`,
     });
 
     const replyRef = chatCol.doc();

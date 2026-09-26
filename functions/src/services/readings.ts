@@ -1,7 +1,7 @@
 import * as logger from "firebase-functions/logger";
 import { describePlacement, transitMoon } from "../astro";
-import { MODELS, type Period } from "../config";
-import { generateJson } from "../lib/claude";
+import { type Period } from "../config";
+import { generateJson } from "../lib/llm";
 import { describePeriod, periodKey } from "../lib/dates";
 import { unavailable } from "../lib/errors";
 import { FieldValue, firestore, paths, Timestamp } from "../lib/firestore";
@@ -25,7 +25,6 @@ export interface ReadingDoc {
   mood: string;
   profileRev: number;
   promptVersion: string;
-  model: string;
 }
 
 export interface ReadingResponse {
@@ -52,7 +51,6 @@ async function generate(profile: Profile, period: Period, now: Date): Promise<Re
   const transit = describePlacement(transitMoon(now));
   return generateJson({
     label: `reading:${period}`,
-    model: MODELS.reading,
     system: READING_SYSTEM,
     messages: [{
       role: "user",
@@ -69,8 +67,8 @@ async function generate(profile: Profile, period: Period, now: Date): Promise<Re
       }),
     }],
     schema: readingSchema,
+    schemaName: "horoscope_reading",
     maxTokens: 4000,
-    effort: "low",
   });
 }
 
@@ -104,7 +102,7 @@ async function waitForReading(id: string, profile: Profile): Promise<ReadingDoc 
 }
 
 /**
- * Cache-or-generate: one Claude call per user, period and language, reused on every later open.
+ * Cache-or-generate: one LLM call per user, period and language, reused on every later open.
  * A short-lived lock doc stops simultaneous opens from paying for the same reading twice.
  */
 export async function ensureReading(
@@ -143,7 +141,6 @@ export async function ensureReading(
       mood: content.mood,
       profileRev: profile.profileRev,
       promptVersion: READING_PROMPT_VERSION,
-      model: MODELS.reading,
     };
     const batch = db.batch();
     batch.set(fullRef, { content });

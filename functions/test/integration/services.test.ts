@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearFirestore } from "./setup";
 
 const claude = vi.hoisted(() => ({ generateJson: vi.fn(), generateText: vi.fn() }));
-vi.mock("../../src/lib/claude", async (orig) => ({ ...(await orig<object>()), ...claude }));
+vi.mock("../../src/lib/llm", async (orig) => ({ ...(await orig<object>()), ...claude }));
 
 const fcm = vi.hoisted(() => ({ sendEachForMulticast: vi.fn() }));
 vi.mock("firebase-admin/messaging", () => ({ getMessaging: () => fcm }));

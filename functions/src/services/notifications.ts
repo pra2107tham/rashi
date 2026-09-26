@@ -1,7 +1,7 @@
 import { getMessaging } from "firebase-admin/messaging";
 import * as logger from "firebase-functions/logger";
-import { MAX_FCM_TOKENS, MODELS, type Language } from "../config";
-import { generateText } from "../lib/claude";
+import { MAX_FCM_TOKENS, type Language } from "../config";
+import { generateText } from "../lib/llm";
 import { isValidZone, utcSlotFor } from "../lib/dates";
 import { invalid } from "../lib/errors";
 import { FieldValue, firestore, paths } from "../lib/firestore";
@@ -46,7 +46,6 @@ async function notificationBody(headline: string, teaser: string, language: Lang
   try {
     const text = await generateText({
       label: "notification",
-      model: MODELS.notification,
       system: NOTIFICATION_SYSTEM,
       messages: [{ role: "user", content: buildNotificationPrompt(headline, teaser, language) }],
       maxTokens: 200,

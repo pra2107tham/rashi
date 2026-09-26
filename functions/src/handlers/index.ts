@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  ANTHROPIC_API_KEY, FOCUS_AREAS, LANGUAGES, PERIODS, PII_ENC_KEY, PLAY_SERVICE_ACCOUNT, PRODUCTS, RATE_LIMITS,
+  OPENROUTER_API_KEY, FOCUS_AREAS, LANGUAGES, PERIODS, PII_ENC_KEY, PLAY_SERVICE_ACCOUNT, PRODUCTS, RATE_LIMITS,
   CHAT_MAX_CHARS,
 } from "../config";
 import { birthDetailsSchema } from "../lib/validate";
@@ -34,7 +34,7 @@ export const getReading = callable(
   z.object({ period: z.enum(PERIODS) }),
   (uid, data) => reading(uid, data.period),
   {
-    secrets: [PII_ENC_KEY, ANTHROPIC_API_KEY],
+    secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
     timeoutSeconds: 60,
     memory: "512MiB",
     rateLimit: { bucket: "reading", perMinute: RATE_LIMITS.reading },
@@ -82,7 +82,7 @@ export const createMatch = callable(
   z.object({ userRole: z.enum(["groom", "bride"]), other: birthDetailsSchema }),
   (uid, data) => match(uid, data),
   {
-    secrets: [PII_ENC_KEY, ANTHROPIC_API_KEY],
+    secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
     memory: "512MiB",
     rateLimit: { bucket: "match", perMinute: RATE_LIMITS.match },
   },
@@ -94,7 +94,7 @@ export const sendChatMessage = callable(
   z.object({ text: z.string().trim().min(1).max(CHAT_MAX_CHARS) }),
   (uid, data) => chat(uid, data.text),
   {
-    secrets: [PII_ENC_KEY, ANTHROPIC_API_KEY],
+    secrets: [PII_ENC_KEY, OPENROUTER_API_KEY],
     rateLimit: { bucket: "chat", perMinute: RATE_LIMITS.chat },
   },
 );
