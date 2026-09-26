@@ -31,7 +31,7 @@ export const LLM = {
    * Output budgets (thinking + visible text). Generous on purpose: Devanagari text uses 2–3× the
    * tokens of English, and you only pay for what's actually generated.
    */
-  maxTokens: { reading: 12000, match: 8000, chat: 4000, notification: 2000 },
+  maxTokens: { reading: 12000, match: 8000, chat: 4000, notification: 4000 },
   appName: "Rashi",
   appUrl: "https://rashi-astro.web.app",
   /**

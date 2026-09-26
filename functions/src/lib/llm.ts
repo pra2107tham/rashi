@@ -87,7 +87,7 @@ function responseFormat(json?: JsonSchemaFormat) {
 function callOpenRouter(req: BaseRequest, json?: JsonSchemaFormat) {
   return post(
     OPENROUTER_ENDPOINT,
-    { Authorization: `Bearer ${OPENROUTER_API_KEY.value()}`, "HTTP-Referer": LLM.appUrl, "X-Title": LLM.appName },
+    { Authorization: `Bearer ${OPENROUTER_API_KEY.value().trim()}`, "HTTP-Referer": LLM.appUrl, "X-Title": LLM.appName },
     {
       model: LLM.model,
       messages: [{ role: "system", content: req.system }, ...req.messages],
@@ -103,10 +103,10 @@ function callOpenRouter(req: BaseRequest, json?: JsonSchemaFormat) {
 }
 
 function callSarvam(req: BaseRequest, json?: JsonSchemaFormat) {
-  const key = SARVAM_API_KEY.value();
   return post(
     SARVAM_ENDPOINT,
-    { Authorization: `Bearer ${key}`, "api-subscription-key": key },
+    // Sarvam authenticates with its own header only; an extra Authorization header gets a 403.
+    { "api-subscription-key": SARVAM_API_KEY.value().trim() },
     {
       model: req.sessionId ? LLM.sarvam.chatModel : LLM.sarvam.model,
       messages: [{ role: "system", content: req.system }, ...req.messages],

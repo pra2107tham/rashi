@@ -91,6 +91,7 @@ describe("OpenRouter client", () => {
       const [url, init] = fetchMock.mock.calls[0];
       expect(url).toBe("https://api.sarvam.ai/v1/chat/completions");
       expect(init.headers["api-subscription-key"]).toBe("sk-sarvam-test");
+      expect(init.headers.Authorization).toBeUndefined();
       const body = JSON.parse(init.body);
       expect(body).toMatchObject({ model: "sarvam-105b", max_tokens: 4096, reasoning_effort: null, temperature: 0.7 });
       expect(body.plugins).toBeUndefined();
