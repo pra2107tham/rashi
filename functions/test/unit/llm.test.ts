@@ -135,3 +135,19 @@ describe("OpenRouter client", () => {
     });
   });
 });
+
+describe("schema errors", () => {
+  it("name the failing field without echoing generated text", async () => {
+    process.env.OPENROUTER_API_KEY = "k";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      choices: [{ message: { content: '{"answer":"secret words"}' }, finish_reason: "stop" }],
+    }))));
+    const err = await generateJson({
+      system: "s", messages: [{ role: "user", content: "u" }], maxTokens: 10, label: "t",
+      schema: z.object({ answer: z.number() }), schemaName: "a",
+    }).catch((e) => e);
+    expect(err.message).toContain("answer:");
+    expect(err.message).not.toContain("secret words");
+    vi.unstubAllGlobals();
+  });
+});

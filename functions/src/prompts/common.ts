@@ -3,7 +3,7 @@ import type { Language } from "../config";
 
 export function languageInstruction(lang: Language): string {
   return lang === "hi"
-    ? "Write everything, including titles, in natural, warm, conversational Hindi in Devanagari script, the way a trusted family astrologer speaks. It should not read like a translation. Never use Latin letters. When an everyday English word fits better, write it in Devanagari (करियर, ऑफिस, मीटिंग). Use plain text only: no markdown, asterisks, bullet symbols or headings inside the text."
+    ? "Write everything, including titles, in natural, warm, conversational Hindi in Devanagari script, the way a trusted family astrologer speaks. It should not read like a translation. Never use Latin letters. When an everyday English word fits better, write it in Devanagari (करियर, ऑफिस, मीटिंग). Use plain text only: no markdown, asterisks, bullet symbols or headings inside the text. This applies to the text you write; JSON field names and fixed values (such as a section's area) stay exactly as specified, in English."
     : "Write everything in warm, conversational English suited to young Indian readers. Sanskrit astrology terms (rashi, nakshatra, dosha) are welcome where natural. Use plain text only: no markdown, asterisks or headings inside the text.";
 }
 

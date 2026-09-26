@@ -1,25 +1,40 @@
 import { z } from "zod";
+import { boundedArray, looseEnum, looseInt } from "./lenient";
 import type { FocusArea, Language, Period } from "../config";
 import type { TransitFacts } from "../astro";
 import { SAFETY_RULES, describeAstro, describeTransitFacts, languageInstruction, type AstroContext } from "./common";
 
 export const READING_PROMPT_VERSION = "reading-v2";
 
+const AREAS = ["love", "career", "money", "health", "overall"] as const;
+const AREA_ALIASES: Record<string, (typeof AREAS)[number]> = {
+  प्रेम: "love", प्यार: "love", रिश्ते: "love", संबंध: "love", लव: "love",
+  करियर: "career", कैरियर: "career", नौकरी: "career", काम: "career", व्यवसाय: "career",
+  धन: "money", पैसा: "money", पैसे: "money", वित्त: "money", मनी: "money",
+  स्वास्थ्य: "health", सेहत: "health", हेल्थ: "health",
+  सामान्य: "overall", समग्र: "overall", कुल: "overall",
+};
+
 export const readingSchema = z.object({
   headline: z.string().describe("A 4–8 word hook for the card title"),
   teaser: z.string().describe("1–2 sentences that make the reader want to open the full reading, without giving away the advice"),
   mood: z.string().describe("One or two words capturing the overall energy"),
-  sections: z
-    .array(
-      z.object({
-        area: z.enum(["love", "career", "money", "health", "overall"]),
-        title: z.string().describe("Short section title in the reading's language"),
-        body: z.string().describe("60–110 words of plain prose, specific and actionable"),
-      }),
-    )
-    .describe("Exactly 3 or 4 sections; the user's focus area first")
-    .refine((s) => s.length >= 3 && s.length <= 4, "3 or 4 sections required"),
-  lucky: z.object({ color: z.string(), number: z.number().int().min(1).max(99), time: z.string() }),
+  sections: boundedArray(
+    z.object({
+      area: looseEnum(AREAS, "overall", AREA_ALIASES).describe(
+        "One of love, career, money, health, overall. Always in English, even for a Hindi reading.",
+      ),
+      title: z.string().describe("Short section title in the reading's language"),
+      body: z.string().describe("60–110 words of plain prose, specific and actionable"),
+    }),
+    2,
+    4,
+  ).describe("Exactly 3 or 4 sections; the user's focus area first"),
+  lucky: z.object({
+    color: z.string(),
+    number: looseInt(1, 99).describe("A whole number from 1 to 99, written with Western digits"),
+    time: z.string(),
+  }),
   remedy: z.string().describe("One simple, free, positive practice for the period"),
 });
 export type ReadingContent = z.infer<typeof readingSchema>;

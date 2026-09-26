@@ -190,7 +190,11 @@ export async function generateJson<S extends z.ZodType>(req: BaseRequest & { sch
         throw new GenerationError(`${req.label}: response was not JSON`, "parse");
       }
       const result = req.schema.safeParse(parsed);
-      if (!result.success) throw new GenerationError(`${req.label}: response did not match schema`, "parse");
+      if (!result.success) {
+        // Field paths and zod messages only, never the generated text itself.
+        const issues = result.error.issues.slice(0, 3).map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`);
+        throw new GenerationError(`${req.label}: response did not match schema (${issues.join("; ")})`, "parse");
+      }
       return result.data;
     },
     { name: req.schemaName, schema },

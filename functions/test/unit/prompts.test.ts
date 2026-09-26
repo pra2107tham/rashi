@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { placeMoon, transitFacts } from "../../src/astro";
 import { buildMatchPrompt, matchNarrativeSchema, strength } from "../../src/prompts/match";
 import { buildReadingPrompt, readingSchema } from "../../src/prompts/reading";
@@ -51,16 +52,40 @@ describe("prompts", () => {
     expect([strength(0, 2), strength(1, 4), strength(3, 6), strength(8, 8)]).toEqual(["zero", "weak", "strong", "full"]);
   });
 
-  it("rejects a paragraph-length share line", () => {
+  it("clips a paragraph-length share line instead of failing", () => {
     const base = { headline: "h", summary: "s", strengths: [], cautions: [], doshaNote: "d" };
-    expect(matchNarrativeSchema.safeParse({ ...base, shareLine: "short and sweet" }).success).toBe(true);
-    expect(matchNarrativeSchema.safeParse({ ...base, shareLine: "x".repeat(300) }).success).toBe(false);
+    const long = "दिल मिले तो तारे भी साथ चलते हैं ".repeat(10);
+    const parsed = matchNarrativeSchema.parse({ ...base, shareLine: long });
+    expect(parsed.shareLine.length).toBeLessThanOrEqual(121);
+    expect(parsed.shareLine.endsWith("…")).toBe(true);
+    expect(matchNarrativeSchema.parse({ ...base, shareLine: "short" }).shareLine).toBe("short");
   });
 
-  it("requires 3–4 reading sections", () => {
-    const section = { area: "career", title: "t", body: "b" };
+  it("repairs common Hindi slips in a reading instead of failing", () => {
+    const reading = { headline: "h", teaser: "t", mood: "m", remedy: "r" };
+    const parsed = readingSchema.parse({
+      ...reading,
+      lucky: { color: "नीला", number: "७", time: "शाम" },
+      sections: [
+        { area: "करियर", title: "t", body: "b" },
+        { area: "Health", title: "t", body: "b" },
+        { area: "ज्योतिष", title: "t", body: "b" },
+        { area: "love", title: "t", body: "b" },
+        { area: "money", title: "t", body: "b" },
+      ],
+    });
+    expect(parsed.lucky.number).toBe(7);
+    expect(parsed.sections.map((x) => x.area)).toEqual(["career", "health", "overall", "love"]);
+  });
+
+  it("still rejects a reading with fewer than 2 sections", () => {
     const reading = { headline: "h", teaser: "t", mood: "m", lucky: { color: "c", number: 1, time: "t" }, remedy: "r" };
-    expect(readingSchema.safeParse({ ...reading, sections: [section, section] }).success).toBe(false);
-    expect(readingSchema.safeParse({ ...reading, sections: [section, section, section] }).success).toBe(true);
+    expect(readingSchema.safeParse({ ...reading, sections: [{ area: "career", title: "t", body: "b" }] }).success).toBe(false);
+  });
+
+  it("keeps the JSON schema sent to the model strict", () => {
+    const schema = JSON.stringify(z.toJSONSchema(readingSchema, { target: "draft-7" }));
+    expect(schema).toContain('"enum":["love","career","money","health","overall"]');
+    expect(schema).toContain('"type":"integer"');
   });
 });

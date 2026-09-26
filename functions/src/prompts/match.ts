@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { clippedString } from "./lenient";
 import type { Language } from "../config";
 import { SAFETY_RULES, languageInstruction } from "./common";
 
@@ -10,10 +11,9 @@ export const matchNarrativeSchema = z.object({
   strengths: z.array(z.string()).describe("2–4 short points, only about kootas marked strong or full"),
   cautions: z.array(z.string()).describe("1–3 short, gentle points, only about kootas marked weak or zero"),
   doshaNote: z.string().describe("Your own plain-language note on any dosha, or reassurance if none; never alarming"),
-  shareLine: z
-    .string()
-    .describe("One playful line of at most 90 characters for a WhatsApp status card. Not a paragraph.")
-    .refine((l) => l.length <= 140, "share line too long"),
+  shareLine: clippedString(120).describe(
+    "One playful line of at most 90 characters for a WhatsApp status card. Not a paragraph.",
+  ),
 });
 export type MatchNarrative = z.infer<typeof matchNarrativeSchema>;
 
