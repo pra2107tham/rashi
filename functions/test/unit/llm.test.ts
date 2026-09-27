@@ -128,6 +128,12 @@ describe("OpenRouter client", () => {
       ]);
     });
 
+    it("sends English to Sarvam when the caller prefers it (notifications)", async () => {
+      fetchMock.mockResolvedValue(reply("Big day ✨"));
+      await generateText({ ...base, language: "en", preferSarvam: true });
+      expect(fetchMock.mock.calls[0][0]).toBe("https://api.sarvam.ai/v1/chat/completions");
+    });
+
     it("keeps English on OpenRouter", async () => {
       fetchMock.mockResolvedValue(reply("hi"));
       await generateText({ ...base, language: "en" });

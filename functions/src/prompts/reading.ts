@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { boundedArray, looseEnum, looseInt } from "./lenient";
+import { boundedArray, clippedString, looseEnum, looseInt } from "./lenient";
 import type { FocusArea, Language, Period } from "../config";
 import type { TransitFacts } from "../astro";
 import { SAFETY_RULES, describeAstro, describeTransitFacts, languageInstruction, type AstroContext } from "./common";
 
-export const READING_PROMPT_VERSION = "reading-v3";
+export const READING_PROMPT_VERSION = "reading-v4";
 
 const AREAS = ["love", "career", "money", "health", "overall"] as const;
 const AREA_ALIASES: Record<string, (typeof AREAS)[number]> = {
@@ -18,7 +18,7 @@ const AREA_ALIASES: Record<string, (typeof AREAS)[number]> = {
 export const readingSchema = z.object({
   headline: z.string().describe("A 4–8 word hook for the card title"),
   teaser: z.string().describe("1–2 sentences that make the reader want to open the full reading, without giving away the advice"),
-  mood: z.string().describe("One or two words capturing the overall energy"),
+  mood: clippedString(40).describe("One or two words capturing the overall energy, not a sentence"),
   sections: boundedArray(
     z.object({
       area: looseEnum(AREAS, "overall", AREA_ALIASES).describe(

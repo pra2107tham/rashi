@@ -3,7 +3,7 @@ import type { Language } from "../config";
 
 export function languageInstruction(lang: Language): string {
   return lang === "hi"
-    ? "Write everything, including titles, in natural, warm, conversational Hindi in Devanagari script, the way a trusted family astrologer speaks. It should not read like a translation. Never use Latin letters. When an everyday English word fits better, write it in Devanagari (करियर, ऑफिस, मीटिंग). Use plain text only: no markdown, asterisks, bullet symbols or headings inside the text. This applies to the text you write; JSON field names and fixed values (such as a section's area) stay exactly as specified, in English."
+    ? "Write everything, including titles, in natural, warm, conversational Hindi in Devanagari script, the way a trusted family astrologer speaks. It should not read like a translation. Never use Latin letters. When an everyday English word fits better, write it in Devanagari (करियर, ऑफिस, मीटिंग). Use plain text only: no markdown, asterisks, bullet symbols or headings inside the text. This applies to the text you write; JSON field names and fixed values (such as a section's area) stay exactly as specified, in English. Use these Hindi terms: जन्म राशि or चंद्र राशि for the Moon sign (never call it लग्न), लग्न only for the ascendant, गोचर चंद्रमा for the transit Moon, भाव for house, तारा for tara, and अनुकूल or चुनौतीपूर्ण for favourable or challenging."
     : "Write everything in warm, conversational English suited to young Indian readers. Sanskrit astrology terms (rashi, nakshatra, dosha) are welcome where natural. Use plain text only: no markdown, asterisks or headings inside the text.";
 }
 
@@ -19,7 +19,7 @@ export function describeTransitFacts(f: TransitFacts): string {
 - Natal Moon sign (janma rashi): ${r(f.natal.rashi)}
 - Transit Moon now: ${r(f.transit.rashi)}, nakshatra ${f.transit.nakshatra.name} (${f.transit.nakshatra.hindi})
 - The transit Moon is in the ${ordinal(f.house)} house counted from the natal Moon sign. This house is about ${f.houseTheme}.
-- Tara: ${f.tara.name} (${f.tara.hindi}), number ${f.tara.number} of 9, counted from the birth nakshatra ${f.natal.nakshatra.name}. It is ${f.tara.tone}.`;
+- Tara: ${f.tara.name} (${f.tara.hindi}), number ${f.tara.number} of 9, counted from the birth nakshatra ${f.natal.nakshatra.name}. It is ${f.tara.tone}. Call it only ${f.tara.name} / ${f.tara.hindi}; never invent another tara name.`;
 }
 
 /** Profile facts shared by every prompt. Contains no name, date, time or place. */

@@ -2,7 +2,7 @@ import type { TransitFacts } from "../astro";
 import type { Language } from "../config";
 import { SAFETY_RULES, describeAstro, describeTransitFacts, languageInstruction, type AstroContext } from "./common";
 
-export const CHAT_PROMPT_VERSION = "chat-v2";
+export const CHAT_PROMPT_VERSION = "chat-v3";
 
 export const CHAT_SYSTEM = `You are Rashi, a friendly Vedic astrologer answering questions in the "Ask the astrologer" chat of an Indian mobile app.
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { placeMoon, transitFacts } from "../../src/astro";
-import { buildMatchPrompt, matchNarrativeSchema, strength } from "../../src/prompts/match";
+import { buildMatchPrompt, fallbackShareLine, matchNarrativeSchema, strength } from "../../src/prompts/match";
 import { buildReadingPrompt, readingSchema } from "../../src/prompts/reading";
 
 const astro = {
@@ -87,5 +87,19 @@ describe("prompts", () => {
     const schema = JSON.stringify(z.toJSONSchema(readingSchema, { target: "draft-7" }));
     expect(schema).toContain('"enum":["love","career","money","health","overall"]');
     expect(schema).toContain('"type":"integer"');
+  });
+
+  it("has a fallback share line with the score in both languages", () => {
+    expect(fallbackShareLine(25, "hi")).toContain("25/36");
+    expect(fallbackShareLine(25, "en")).toContain("25/36");
+  });
+
+  it("tells the model to use only the given tara name and the right Hindi terms", () => {
+    const p = buildReadingPrompt({
+      period: "today", periodDescription: "d", focusArea: "love", language: "hi",
+      astro, facts: transitFacts(placeMoon(282), placeMoon(350)),
+    });
+    expect(p).toContain("never invent another tara name");
+    expect(p).toContain("never call it लग्न");
   });
 });

@@ -5,7 +5,7 @@ import { encryptJson, sha256 } from "../lib/crypto";
 import { unavailable } from "../lib/errors";
 import { FieldValue, firestore, paths } from "../lib/firestore";
 import type { BirthDetails } from "../lib/validate";
-import { MATCH_PROMPT_VERSION, MATCH_SYSTEM, buildMatchPrompt, matchNarrativeSchema } from "../prompts/match";
+import { MATCH_PROMPT_VERSION, MATCH_SYSTEM, buildMatchPrompt, fallbackShareLine, matchNarrativeSchema } from "../prompts/match";
 import { chartFor, loadProfile, resolveTimezone, type StoredChart } from "./profile";
 import * as logger from "firebase-functions/logger";
 
@@ -71,6 +71,8 @@ export async function createMatch(uid: string, input: CreateMatchInput) {
     logger.error("match.generate_failed", { uid, err: String(err) });
     throw unavailable("We couldn't prepare the match right now. Please try again.");
   }
+
+  if (!narrative.shareLine.trim()) narrative.shareLine = fallbackShareLine(result.scores.total, profile.language);
 
   const doc = {
     uid,

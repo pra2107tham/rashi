@@ -3,7 +3,7 @@ import { boundedArray, clippedString } from "./lenient";
 import type { Language } from "../config";
 import { SAFETY_RULES, languageInstruction } from "./common";
 
-export const MATCH_PROMPT_VERSION = "match-v3";
+export const MATCH_PROMPT_VERSION = "match-v4";
 
 export const matchNarrativeSchema = z.object({
   headline: z.string().describe("Short, shareable verdict, e.g. 'A steady, heart-first match'"),
@@ -35,6 +35,11 @@ export function strength(score: number, max: number): "full" | "strong" | "weak"
   if (score === 0) return "zero";
   if (score === max) return "full";
   return score / max >= 0.5 ? "strong" : "weak";
+}
+
+/** Used when the model leaves the share line empty, which Sarvam sometimes does. */
+export function fallbackShareLine(total: number, language: Language): string {
+  return language === "hi" ? `${total}/36 गुण मिले, सितारे भी साथ हैं ✨` : `${total}/36 gunas matched, and the stars approve ✨`;
 }
 
 export interface MatchPromptInput {

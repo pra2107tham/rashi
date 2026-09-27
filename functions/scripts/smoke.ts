@@ -12,7 +12,7 @@ import { LLM, type FocusArea, type Language, type Period } from "../src/config";
 import { describePeriod } from "../src/lib/dates";
 import { generateJson, generateText } from "../src/lib/llm";
 import { CHAT_SYSTEM, buildChatContext } from "../src/prompts/chat";
-import { MATCH_SYSTEM, buildMatchPrompt, matchNarrativeSchema } from "../src/prompts/match";
+import { MATCH_SYSTEM, buildMatchPrompt, fallbackShareLine, matchNarrativeSchema } from "../src/prompts/match";
 import { NOTIFICATION_SYSTEM, buildNotificationPrompt } from "../src/prompts/notification";
 import { READING_SYSTEM, buildReadingPrompt, readingSchema, type ReadingContent } from "../src/prompts/reading";
 import { astroContext, chartFor } from "../src/services/profile";
@@ -108,6 +108,7 @@ async function match(language: Language) {
     schemaName: "kundli_match",
     maxTokens: LLM.maxTokens.match,
   });
+  if (!n.shareLine.trim()) n.shareLine = fallbackShareLine(result.scores.total, language);
   origLog(`Score: ${result.scores.total}/36  ${JSON.stringify(result.scores)}`);
   origLog(`\n★ ${n.headline}\n  ${n.summary}\n  + ${n.strengths.join("\n  + ")}\n  − ${n.cautions.join("\n  − ")}`);
   origLog(`  Dosha: ${n.doshaNote}\n  Share: “${n.shareLine}”`);
@@ -132,6 +133,7 @@ async function notification(r: ReadingContent, language: Language) {
   const body = await generateText({
     label: `notification:${language}`,
     language,
+    preferSarvam: true,
     system: NOTIFICATION_SYSTEM,
     messages: [{ role: "user", content: buildNotificationPrompt(r.headline, r.teaser, language) }],
     maxTokens: LLM.maxTokens.notification,

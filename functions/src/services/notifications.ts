@@ -47,6 +47,8 @@ async function notificationBody(headline: string, teaser: string, language: Lang
     const text = await generateText({
       label: "notification",
       language,
+      // A one-liner doesn't need a thinking model; routed ones took up to 60 s here.
+      preferSarvam: true,
       system: NOTIFICATION_SYSTEM,
       messages: [{ role: "user", content: buildNotificationPrompt(headline, teaser, language) }],
       maxTokens: LLM.maxTokens.notification,

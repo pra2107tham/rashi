@@ -28,6 +28,8 @@ interface BaseRequest {
   language?: string;
   /** Multi-turn chat: keeps a conversation on one routed model, and uses Sarvam's conversational model. */
   sessionId?: string;
+  /** Send to Sarvam whatever the language (short, latency-sensitive copy); still falls back to OpenRouter. */
+  preferSarvam?: boolean;
 }
 
 interface JsonSchemaFormat {
@@ -152,7 +154,7 @@ function extractText(provider: Provider, data: CompletionResponse, req: BaseRequ
  * malformed Sarvam answer also falls back to OpenRouter instead of failing the user's request.
  */
 async function complete<T>(req: BaseRequest, validate: (text: string) => T, json?: JsonSchemaFormat): Promise<T> {
-  if (req.language && LLM.sarvam.languages.includes(req.language)) {
+  if (req.preferSarvam || (req.language && LLM.sarvam.languages.includes(req.language))) {
     const started = Date.now();
     try {
       return validate(extractText("sarvam", await callSarvam(req, json), req, started));
