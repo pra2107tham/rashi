@@ -5,7 +5,8 @@ import {
 } from "../config";
 import { birthDetailsSchema } from "../lib/validate";
 import { obfuscatedAccountId, verifyPurchase as verify } from "../services/billing";
-import { sendChatMessage as chat } from "../services/chat";
+import { getChatHistory as chatHistory, sendChatMessage as chat } from "../services/chat";
+import { searchPlaces as places } from "../services/places";
 import { loadEntitlements, publicEntitlements } from "../services/entitlements";
 import { createMatch as match } from "../services/match";
 import { registerDevice as register, updateNotificationPrefs as updatePrefs } from "../services/notifications";
@@ -45,6 +46,12 @@ export const deleteAccount = callable(z.object({ confirm: z.literal(true) }), as
   await deleteUserData(uid);
   return { deleted: true };
 });
+
+export const searchPlaces = callable(
+  z.object({ query: z.string().trim().min(2).max(60) }),
+  async (_uid, data) => ({ places: places(data.query) }),
+  { rateLimit: { bucket: "places", perMinute: RATE_LIMITS.places } },
+);
 
 // ---- Phase 2: monetization --------------------------------------------------------------------
 
@@ -99,4 +106,9 @@ export const sendChatMessage = callable(
     timeoutSeconds: 120,
     rateLimit: { bucket: "chat", perMinute: RATE_LIMITS.chat },
   },
+);
+
+export const getChatHistory = callable(
+  z.object({ limit: z.number().int().min(1).max(100).optional() }),
+  async (uid, data) => ({ messages: await chatHistory(uid, data.limit) }),
 );

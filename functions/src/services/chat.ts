@@ -73,3 +73,13 @@ export async function sendChatMessage(uid: string, text: string) {
     throw unavailable("The astrologer couldn't answer just now — your credit was refunded.");
   }
 }
+
+/** Most recent messages, oldest first, for the chat screen. Failed (refunded) turns are hidden. */
+export async function getChatHistory(uid: string, limit = 50) {
+  const snap = await firestore().collection(paths.chat(uid)).orderBy("createdAt", "desc").limit(limit).get();
+  return snap.docs
+    .reverse()
+    .map((d) => ({ id: d.id, ...(d.data() as ChatMessageDoc), createdAt: d.get("createdAt")?.toMillis?.() ?? null }))
+    .filter((m) => !m.failed)
+    .map(({ id, role, content, createdAt }) => ({ id, role, content, createdAt }));
+}

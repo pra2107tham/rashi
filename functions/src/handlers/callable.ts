@@ -1,7 +1,7 @@
 import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import type { SecretParam } from "firebase-functions/params";
 import type { z } from "zod";
-import { IS_EMULATOR, REGION } from "../config";
+import { ENFORCE_APP_CHECK, IS_EMULATOR, REGION } from "../config";
 import { HttpsError } from "../lib/errors";
 import { enforceRateLimit } from "../lib/rateLimit";
 import { parseInput } from "../lib/validate";
@@ -23,7 +23,7 @@ export function callable<S extends z.ZodType, R>(
   return onCall(
     {
       region: REGION,
-      enforceAppCheck: !IS_EMULATOR,
+      enforceAppCheck: IS_EMULATOR ? false : ENFORCE_APP_CHECK,
       timeoutSeconds: opts.timeoutSeconds ?? 60,
       memory: opts.memory ?? "256MiB",
       // firebase-functions rejects keys that are present but undefined.

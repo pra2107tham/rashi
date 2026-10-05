@@ -10,7 +10,7 @@ vi.mock("firebase-admin/messaging", () => ({ getMessaging: () => fcm }));
 import { firestore, paths } from "../../src/lib/firestore";
 import { setPlayApiForTesting, type PlayApi } from "../../src/lib/play";
 import { obfuscatedAccountId, verifyPurchase, handleDeveloperNotification } from "../../src/services/billing";
-import { sendChatMessage } from "../../src/services/chat";
+import { getChatHistory, sendChatMessage } from "../../src/services/chat";
 import { createMatch } from "../../src/services/match";
 import { registerDevice, runDailySlot } from "../../src/services/notifications";
 import { deleteUserData, loadProfile, upsertProfile } from "../../src/services/profile";
@@ -121,6 +121,10 @@ describe("chat", () => {
 
     const msgs = await firestore().collection(paths.chat(uid)).get();
     expect(msgs.size).toBe(3); // user, assistant, failed user
+
+    const history = await getChatHistory(uid);
+    expect(history.map((m) => m.role)).toEqual(["user", "assistant"]); // the failed turn is hidden
+    expect(history[0].content).toBe("Will my interview go well?");
   });
 
   it("refuses when out of credits", async () => {
@@ -138,7 +142,7 @@ describe("billing", () => {
       acknowledgeProduct: vi.fn(async () => undefined),
       consumeProduct: vi.fn(async () => undefined),
       getSubscription: vi.fn(async () => ({
-        state: "SUBSCRIPTION_STATE_ACTIVE", productId: "rashi_plus_monthly", expiresAt: new Date(Date.now() + 30 * 86400_000),
+        state: "SUBSCRIPTION_STATE_ACTIVE", productId: "rashi_plus_weekly", expiresAt: new Date(Date.now() + 30 * 86400_000),
         acknowledged: false, orderId: "GPA.2", obfuscatedAccountId: null, linkedPurchaseToken: null,
       })),
       acknowledgeSubscription: vi.fn(async () => undefined),
@@ -172,7 +176,7 @@ describe("billing", () => {
   it("subscription unlocks locked readings; refund revokes it", async () => {
     const uid = await newUser();
     fakePlay();
-    const res = await verifyPurchase(uid, { productId: "rashi_plus_monthly", purchaseToken: "token-sub-123" });
+    const res = await verifyPurchase(uid, { productId: "rashi_plus_weekly", purchaseToken: "token-sub-123" });
     expect(res.subscribed).toBe(true);
     expect((await getReading(uid, "month", NOW)).locked).toBe(false);
 
