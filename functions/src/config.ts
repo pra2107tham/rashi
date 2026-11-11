@@ -1,4 +1,4 @@
-import { defineSecret, defineString } from "firebase-functions/params";
+import { defineBoolean, defineSecret, defineString } from "firebase-functions/params";
 
 export const REGION = "asia-south1";
 
@@ -12,6 +12,12 @@ export const PLAY_SERVICE_ACCOUNT = defineSecret("PLAY_SERVICE_ACCOUNT"); // ser
 export const PLAY_PACKAGE_NAME = defineString("PLAY_PACKAGE_NAME", { default: "com.rashi.app" });
 
 export const IS_EMULATOR = process.env.FUNCTIONS_EMULATOR === "true";
+
+/**
+ * App Check on callables. Play Integrity only vouches for apps installed from Google Play, so this
+ * stays off while testing sideloaded APKs; set ENFORCE_APP_CHECK=true in functions/.env at Play launch.
+ */
+export const ENFORCE_APP_CHECK = defineBoolean("ENFORCE_APP_CHECK", { default: false });
 
 /**
  * All generation goes through OpenRouter's Auto Router, which picks a model per request.
@@ -82,11 +88,11 @@ export interface Product {
 
 /** Play Console product ids → what they grant. Keep in sync with the Play Console. */
 export const PRODUCTS: Record<string, Product> = {
-  reading_unlock: { type: "unlock" },
+  reading_unlock: { type: "unlock" }, // ₹49 one-time
   chat_credits_10: { type: "credits", credits: 10 },
   chat_credits_30: { type: "credits", credits: 30 },
-  rashi_plus_monthly: { type: "subscription" },
-  rashi_plus_yearly: { type: "subscription" },
+  rashi_plus_weekly: { type: "subscription" }, // ₹99/week, 3-day free trial
+  rashi_plus_yearly: { type: "subscription" }, // ₹999/year
 };
 
 /** Per-user, per-minute call limits for callables that call the LLM. */
@@ -95,4 +101,5 @@ export const RATE_LIMITS = {
   match: 5,
   chat: 10,
   profile: 10,
+  places: 60,
 } as const;

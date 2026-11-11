@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "796495436503",
+    "project_id": "rashi-astro",
+    "storage_bucket": "rashi-astro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796495436503:android:bad7288c4af72ec981ae92",
+        "android_client_info": {
+          "package_name": "com.rashi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiKTHVoQGPTjacBj0RMfCBZB7ZrJ7kkqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

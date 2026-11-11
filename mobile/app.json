@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Rashi",
+    "slug": "rashi",
+    "scheme": "rashi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A10",
+    "android": {
+      "package": "com.rashi.app",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A10",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-localization",
+      "expo-sharing",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "@react-native-firebase/messaging",
+        { "android": { "notificationIcon": "./assets/notification-icon.png", "notificationColor": "#E8A33D" } }
+      ],
+      [
+        "expo-splash-screen",
+        { "image": "./assets/splash-icon.png", "imageWidth": 120, "backgroundColor": "#0A0A10" }
+      ],
+      [
+        "expo-build-properties",
+        { "ios": { "useFrameworks": "static" } }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    }
+  }
+}
